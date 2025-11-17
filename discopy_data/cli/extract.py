@@ -11,20 +11,21 @@ from tqdm import tqdm
 import discopy_data.dataset.anthology
 import discopy_data.dataset.argessay
 import discopy_data.dataset.bbc
-import discopy_data.dataset.because
-import discopy_data.dataset.biocause
-import discopy_data.dataset.biodrb
+# import discopy_data.dataset.because
+# import discopy_data.dataset.biocause
+# import discopy_data.dataset.biodrb
 import discopy_data.dataset.global_voices
 import discopy_data.dataset.pdtb
 import discopy_data.dataset.pdtb3
 import discopy_data.dataset.press_gov
 import discopy_data.dataset.short_stories
 import discopy_data.dataset.ted
-import discopy_data.dataset.tedmdb
+# import discopy_data.dataset.tedmdb
 import discopy_data.dataset.un_debates
 from discopy_data.data.doc import Document
 from discopy_data.data.sentence import Sentence, DepRel
 from discopy_data.data.token import Token
+
 
 document_extractor = {
     'anthology': discopy_data.dataset.anthology.extract,

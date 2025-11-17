@@ -14,12 +14,13 @@ setup(name='discopy-data-rknaebel',
       license='MIT',
       packages=find_packages(),
       install_requires=[
+            'joblib==1.1.0',
             'numpy>=1.18.0',
             'nltk>=3.4',
-            'joblib',
-            'tensorflow>=2.1.0',
-            'transformers==4.8.1',
-            'trankit==1.1.0',
+            'pandas==1.3.5',
+            'pybtex==0.24.0',
+            'supar==1.1.1',
+            'trankit @ git+https://github.com/nlp-uoregon/trankit.git'
       ],
       zip_safe=False,
       entry_points={
