@@ -1,12 +1,20 @@
 import json
 import os
 import sys
+import warnings
 
 import click
 from tqdm import tqdm
 
 from discopy_data.data.doc import Document
 from discopy_data.data.update import get_constituent_parse, get_dependency_parse
+
+# quiet torch warning from supar RNN internals
+warnings.filterwarnings(
+    "ignore",
+    message="apply_permutation is deprecated",
+    category=UserWarning,
+)
 
 
 @click.command()
@@ -24,7 +32,8 @@ def main(src, tgt, constituent_parser, dependency_parser, constituents, dependen
     cparser = supar.Parser.load(constituent_parser) if constituents else None
     sys.stderr.write('SUPAR load dependency parser!\n')
     dparser = supar.Parser.load(dependency_parser) if dependencies else None
-    for line in tqdm(src):
+    
+    for line in tqdm(src, desc="Supar parsing", unit="doc"):
         doc = Document.from_json(json.loads(line))
         for sent_i, sent in enumerate(doc.sentences):
             inputs = [(t.surface, t.upos) for t in sent.tokens]
