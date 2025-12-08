@@ -2,7 +2,7 @@ import json
 import logging
 import os
 from collections import defaultdict
-from typing import List
+from typing import List, Optional
 
 import joblib
 import numpy as np
@@ -23,7 +23,9 @@ def convert_sense(s, lvl):
         return s
 
 
-def load_parsed_conll_dataset(conll_path: str, simple_connectives=False, limit=0, sense_level=-1) -> List[Document]:
+def load_parsed_conll_dataset(
+        conll_path: str, simple_connectives=False, limit=0, sense_level=-1
+) -> List[Document]:
     parses_path = os.path.join(conll_path, 'parses.json')
     relations_path = os.path.join(conll_path, 'relations.json')
     docs = []
@@ -65,17 +67,25 @@ def load_parsed_conll_dataset(conll_path: str, simple_connectives=False, limit=0
     return docs
 
 
-def load_bert_conll_dataset(conll_path: str, simple_connectives=False, limit=0, cache_dir='',
-                            bert_model='bert-base-cased', sense_level=-1) -> List[Document]:
+def load_bert_conll_dataset(
+        conll_path: str, simple_connectives=False, limit=0, cache_dir='',
+        bert_model='bert-base-cased', sense_level=-1,
+        dtype: Optional[np.dtype] = None,
+        mmap_mode: Optional[str] = None
+) -> List[Document]:
     docs = load_parsed_conll_dataset(conll_path, simple_connectives, limit, sense_level)
     logging.info(f'Load {bert_model} Embeddings')
-    docs = load_bert_embeddings(docs, cache_dir, bert_model)
+    docs = load_bert_embeddings(docs, cache_dir, bert_model, dtype=dtype, mmap_mode=mmap_mode)
     return docs
 
 
-def load_bert_embeddings(docs: List[Document], cache_dir='', bert_model='bert-base-cased') -> List[Document]:
+def load_bert_embeddings(
+        docs: List[Document], cache_dir='', bert_model='bert-base-cased',
+        dtype: Optional[np.dtype] = None,
+        mmap_mode: Optional[str] = None
+) -> List[Document]:
     if cache_dir and os.path.exists(cache_dir):
-        doc_embeddings = joblib.load(cache_dir)
+        doc_embeddings = joblib.load(cache_dir, mmap_mode=mmap_mode)
         tokenizer = None
         model = None
         preloaded = True
@@ -97,6 +107,8 @@ def load_bert_embeddings(docs: List[Document], cache_dir='', bert_model='bert-ba
             doc_embedding = get_doc_sentence_embeddings(doc.sentences, tokenizer, model,
                                                         last_hidden_only=last_hidden_only)
             doc_embeddings[doc.doc_id] = doc_embedding
+        if dtype is not None:
+            doc_embedding = doc_embedding.astype(dtype, copy=False)
         for sent_i, sent in enumerate(doc.sentences):
             token_offset = sent.tokens[0].idx
             embeddings = doc_embedding[token_offset:token_offset + len(sent.tokens)]
@@ -106,8 +118,11 @@ def load_bert_embeddings(docs: List[Document], cache_dir='', bert_model='bert-ba
     return docs
 
 
-def load_embeddings_conll_dataset(conll_path: str, embedder: 'TokenSentenceEmbedder', simple_connectives=False, limit=0,
-                                  sense_level=-1) -> List[Document]:
+def load_embeddings_conll_dataset(
+        conll_path: str, embedder: 'TokenSentenceEmbedder', 
+        simple_connectives=False, limit=0,
+        sense_level=-1
+) -> List[Document]:
     docs = load_parsed_conll_dataset(conll_path, simple_connectives, limit, sense_level)
     for doc in docs:
         for sent_i, sent in enumerate(doc.sentences):
@@ -117,7 +132,6 @@ def load_embeddings_conll_dataset(conll_path: str, embedder: 'TokenSentenceEmbed
 
 
 class TokenSentenceEmbedder:
-
     def __init__(self, vector_path):
         def get_coefs(word, *arr):
             return word, np.asarray(arr, dtype=np.float32)
